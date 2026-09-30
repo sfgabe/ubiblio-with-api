@@ -75,3 +75,11 @@ class vkey(Base):
     url = Column(String, index=True)
     
     
+
+class apiKey(Base):
+    __tablename__ = "apiKeys"
+    id = Column(Integer, primary_key=True)
+    keyHash = Column(String, unique=True, index=True, nullable=False)
+    prefix = Column(String, nullable=False)
+    label = Column(String, nullable=True)
+    created = Column(DateTime(timezone=True), server_default=func.now())

@@ -1,9 +1,9 @@
 import datetime as dt
 from typing import Annotated, Dict, Optional
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
-from fastapi.security import OAuth2
+from fastapi.security import APIKeyHeader, OAuth2
 from fastapi.security.utils import get_authorization_scheme_param
 from jose import JWTError, jwt
 from passlib.handlers.sha2_crypt import sha512_crypt as crypto
@@ -161,3 +161,29 @@ def get_admin_user(user: current_user):
 
 
 admin_user = Annotated[schemas.User, Depends(get_admin_user)]
+
+
+api_key_header = APIKeyHeader(name="X-Api-Key", auto_error=False)
+
+
+def verify_api_key(key: Optional[str] = Security(api_key_header)) -> None:
+    """
+    Check the X-Api-Key header against the stored API keys.
+
+    Unlike the cookie-based checks above, this returns a 401 instead of
+    redirecting to the login page, since API clients can't follow a login flow.
+    """
+    db = database.SessionLocal()
+    try:
+        valid = crud.isValidApiKey(db, key)
+    finally:
+        db.close()
+    if not valid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing API key.",
+            headers={"WWW-Authenticate": "ApiKey"},
+        )
+
+
+api_key = Depends(verify_api_key)

@@ -10,6 +10,8 @@ import csv
 from .vars import *
 from os import remove, path
 import uuid
+import hashlib
+import secrets
 
 
 def get_user(db: Session, user_id: int):
@@ -607,6 +609,50 @@ def updateVkey(db: Session, newKey: schemas.vkey):
         oldVkey.vkey = newKey.vkey
         db.merge(oldVkey)  
         db.commit()
+    except Exception as e:
+        print(e)
+        return False
+
+
+#API keys. The plaintext key is only returned once, at creation; the DB stores a SHA-256 hash.
+API_KEY_PREFIX = "ubk_"
+
+def hashApiKey(key: str):
+    return hashlib.sha256(key.encode()).hexdigest()
+
+def createApiKey(db: Session, label: str = None):
+    try:
+        key = API_KEY_PREFIX + secrets.token_urlsafe(32)
+        row = models.apiKey(keyHash=hashApiKey(key), prefix=key[:len(API_KEY_PREFIX) + 4], label=label)
+        db.add(row)
+        db.commit()
+        return key
+    except Exception as e:
+        print(e)
+        return False
+
+def getAllApiKeys(db: Session):
+    try:
+        return db.query(models.apiKey).all()
+    except Exception as e:
+        print(e)
+        return
+
+def deleteApiKey(db: Session, keyId: int):
+    try:
+        row = db.query(models.apiKey).filter(models.apiKey.id == keyId).first()
+        db.delete(row)
+        db.commit()
+        return True
+    except:
+        return False
+
+def isValidApiKey(db: Session, key: str):
+    if not key:
+        return False
+    try:
+        result = db.query(models.apiKey).filter(models.apiKey.keyHash == hashApiKey(key))
+        return db.query(result.exists()).scalar()
     except Exception as e:
         print(e)
         return False

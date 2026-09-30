@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block main %}
+
+<!-- Banner -->
+<!-- Two -->
+	<section id="two">
+		<div class="inner" style = "padding: 20px 0 1em 0;">
+
+<h1>Gestion des clés API</h1>
+
+{% for error in errors %}
+    <p style="color: red">{{ error }}</p>
+{% endfor %}
+
+{% if newKey %}
+<div style="margin-bottom:25px;">
+	<h3>Nouvelle clé API créée</h3>
+	<p>Copiez cette clé maintenant. Elle ne sera plus affichée.</p>
+	<pre><code>{{ newKey }}</code></pre>
+</div>
+{% endif %}
+
+<form action="/addApiKey" method="post" style="margin-bottom:25px;">
+	<p><label for="label">Libellé (ex. « Home Assistant »)</label></p>
+	<input id="label" type="text" name="label" value="" maxlength="100">
+	<input type="submit" value="Créer une clé" style="margin-top:15px;">
+</form>
+
+<h2 style="margin-top:25px; margin-bottom:15px;">Liste des clés API</h2>
+
+<div class="container">
+  <table>
+    <thead class="visible@l">
+      <tr>
+        <th>Libellé</th>
+        <th>Clé</th>
+        <th>Créée le</th>
+		<th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id = "tablebody">
+{% if apiKeys %}
+{% for apiKey in apiKeys %}
+		<tr>
+			<td>{{ apiKey.label or "" }}</td>
+			<td>{{ apiKey.prefix }}...</td>
+			<td>{{ apiKey.created.strftime('%Y-%m-%d') if apiKey.created else "" }}</td>
+			<td><a href="/deleteApiKey/{{ apiKey.id }}" onclick="if (!confirm('Êtes-vous sûr ? Tout ce qui utilise cette clé cessera de fonctionner.')) return false;">Supprimer</a></td>
+		</tr>
+{% endfor %}
+{% else %}
+		<tr>
+			<td>Aucune clé -- l’API est désactivée.</td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+{% endif %}
+    </tbody>
+  </table>
+	<p>Les clés API donnent un accès en lecture seule aux livres et aux statistiques de votre bibliothèque via l’API JSON. Elles ne permettent pas d’emprunter, de modifier ou de supprimer du contenu. Envoyez la clé dans un en-tête <code>X-Api-Key</code>.</p>
+</div>
+
+</div>
+
+</section>
+{% endblock %}

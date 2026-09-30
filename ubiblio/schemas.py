@@ -123,3 +123,13 @@ class vkeyBase(BaseModel):
 class vkey(vkeyBase):
     id: int  
     model_config = ConfigDict(from_attributes=True)
+
+#API keys for the read-only JSON API. Only a hash of the key is stored.
+class apiKeyBase(BaseModel):
+    label: Optional[str] = None
+
+class apiKey(apiKeyBase):
+    id: int
+    prefix: str
+    created: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)

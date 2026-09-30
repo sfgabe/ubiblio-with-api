@@ -12,6 +12,8 @@ from .auth import (
     get_current_user_from_token,
     get_current_user_from_cookie,
     login_for_access_token,
+    verify_api_key,
+    api_key,
 )
 from .forms import LoginForm, newUserForm, newVkeyForm, bookForm, configForm
 from .utils import CHUNK_SIZE, get_rate_limiter, get_body
@@ -30,6 +32,8 @@ __all__ = [
     "get_current_user_from_token",
     "get_current_user_from_cookie",
     "login_for_access_token",
+    "verify_api_key",
+    "api_key",
     "LoginForm", "newUserForm", "newVkeyForm", "bookForm", "configForm",
     "CHUNK_SIZE", "get_rate_limiter", "get_body",
 ]

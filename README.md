@@ -49,3 +49,20 @@ The HTML theme is modified from "forty" by HTML5UP (https://html5up.net/). Actua
 
 # Reading list / Browse by Genre / Wishlist / Withdrawn Books List
 ![Screenshot of a more detailed list of books](https://raw.githubusercontent.com/seanboyce/ubiblio/refs/heads/dev/ubiblio_readling_list.png)
+
+# JSON API
+uBiblio has a small, read-only JSON API for things like Home Assistant, dashboards, or scripts. An admin creates an API key under Admin > API Keys (the key is shown once), then sends it in an `X-Api-Key` header:
+
+```bash
+curl -H "X-Api-Key: ubk_..." http://your-library:8000/api/v1/books/recent
+```
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/v1/books?skip=0&limit=50` | Paginated list of books (limit up to 100), with a total `count` |
+| `GET /api/v1/books/{id}` | A single book |
+| `GET /api/v1/books/recent?limit=10` | Most recently added books |
+| `GET /api/v1/books/random` | One random book |
+| `GET /api/v1/stats` | Total books, ebooks, withdrawn books, and counts by genre and collection |
+
+Books include their cover image URLs. The API can't add, change, or withdraw books, and it doesn't show who has a book withdrawn. Requests without a valid key get a `401`. Interactive docs are at `/docs`.

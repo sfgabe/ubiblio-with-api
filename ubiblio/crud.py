@@ -91,8 +91,8 @@ def updateBook(db: Session, book: schemas.Book):
         return False
         
 def getBooks(db: Session, skip: int = 0, limit: int = 50):
-    result = db.query(models.Book).offset(skip).limit(limit).all()
-    resultCount = db.query(models.Book).with_entities(func.count()).scalar()
+    result = db.query(models.Book).order_by(models.Book.id).offset(skip).limit(limit).all()
+    resultCount = db.query(func.count(models.Book.id)).scalar()
     return result, resultCount
   
   
@@ -656,6 +656,20 @@ def isValidApiKey(db: Session, key: str):
     except Exception as e:
         print(e)
         return False
+
+
+#Read-only queries for the JSON API.
+def getRecentBooks(db: Session, limit: int = 10):
+    return db.query(models.Book).order_by(models.Book.id.desc()).limit(limit).all()
+
+def getRandomBook(db: Session):
+    return db.query(models.Book).order_by(func.random()).first()
+
+def getImagesForBooks(db: Session, bookIds: list):
+    images = {}
+    for image in db.query(models.bookImage).filter(models.bookImage.bookId.in_(bookIds)).order_by(models.bookImage.id).all():
+        images.setdefault(image.bookId, []).append(image.filename)
+    return images
 
 
 def stats(db: Session, isSum, group, target):

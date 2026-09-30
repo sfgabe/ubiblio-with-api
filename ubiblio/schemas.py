@@ -133,3 +133,34 @@ class apiKey(apiKeyBase):
     prefix: str
     created: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+
+#Book as returned by the JSON API. withdrawnBy is left out so API keys don't expose who borrowed what.
+class ApiBook(BookBase):
+    id: int
+    author: Optional[str] = None
+    summary: Optional[str] = None
+    genre: Optional[str] = None
+    library: Optional[str] = None
+    shelf: Optional[str] = None
+    collection: Optional[str] = None
+    ISBN: Optional[str] = None
+    notes: Optional[str] = None
+    owned: Optional[bool] = None
+    withdrawn: Optional[bool] = None
+    customField1: Optional[str] = None
+    customField2: Optional[str] = None
+    ebook: Optional[bool] = None
+    images: list[str] = []
+
+class ApiBookList(BaseModel):
+    count: int
+    skip: int
+    limit: int
+    books: list[ApiBook]
+
+class ApiStats(BaseModel):
+    books: int
+    ebooks: int
+    withdrawn: int
+    byGenre: dict[str, int]
+    byCollection: dict[str, int]

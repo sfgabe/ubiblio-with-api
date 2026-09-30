@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from sqlalchemy.sql import func
 
@@ -29,10 +31,11 @@ def to_api_books(request: Request, db, books):
 
 
 @router.get("/books", response_model=schemas.ApiBookList)
-def list_books(request: Request, skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=MAX_LIMIT)):
+def list_books(request: Request, skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=MAX_LIMIT),
+               collection: Optional[str] = None):
     db = SessionLocal()
     try:
-        books, count = crud.getBooks(db, skip=skip, limit=limit)
+        books, count = crud.getBooks(db, skip=skip, limit=limit, collection=collection)
         return schemas.ApiBookList(count=count, skip=skip, limit=limit, books=to_api_books(request, db, books))
     finally:
         db.close()
@@ -48,12 +51,13 @@ def recent_books(request: Request, limit: int = Query(10, ge=1, le=MAX_LIMIT)):
 
 
 @router.get("/books/random", response_model=schemas.ApiBook)
-def random_book(request: Request):
+def random_book(request: Request, collection: Optional[str] = None):
     db = SessionLocal()
     try:
-        book = crud.getRandomBook(db)
+        book = crud.getRandomBook(db, collection)
         if book is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="The library has no books.")
+            detail = "No books in that collection." if collection is not None else "The library has no books."
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
         return to_api_books(request, db, [book])[0]
     finally:
         db.close()
@@ -79,7 +83,7 @@ def library_stats():
             return db.query(func.count(models.Book.id)).filter(*where).scalar()
 
         def grouped(field):
-            # Books with no genre/collection (None or "") are counted together under "".
+            # Books with no genre (None or "") are counted together under "".
             totals = {}
             for key, n in crud.stats(db, False, field, field).items():
                 totals[key or ""] = totals.get(key or "", 0) + n
@@ -90,7 +94,17 @@ def library_stats():
             ebooks=count(models.Book.ebook == True),
             withdrawn=count(models.Book.withdrawn == True),
             byGenre=grouped("genre"),
-            byCollection=grouped("collection"),
+            byCollection=crud.getCollections(db),
         )
+    finally:
+        db.close()
+
+
+@router.get("/collections", response_model=list[schemas.ApiCollection])
+def list_collections():
+    db = SessionLocal()
+    try:
+        # Books with no collection are listed under "".
+        return [schemas.ApiCollection(name=name, count=n) for name, n in sorted(crud.getCollections(db).items())]
     finally:
         db.close()

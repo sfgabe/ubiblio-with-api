@@ -164,3 +164,7 @@ class ApiStats(BaseModel):
     withdrawn: int
     byGenre: dict[str, int]
     byCollection: dict[str, int]
+
+class ApiCollection(BaseModel):
+    name: str
+    count: int

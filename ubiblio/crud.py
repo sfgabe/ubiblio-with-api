@@ -90,9 +90,12 @@ def updateBook(db: Session, book: schemas.Book):
         print(e)
         return False
         
-def getBooks(db: Session, skip: int = 0, limit: int = 50):
-    result = db.query(models.Book).order_by(models.Book.id).offset(skip).limit(limit).all()
-    resultCount = db.query(func.count(models.Book.id)).scalar()
+def getBooks(db: Session, skip: int = 0, limit: int = 50, collection: str = None):
+    query = db.query(models.Book)
+    if collection is not None:
+        query = query.filter(inCollection(collection))
+    result = query.order_by(models.Book.id).offset(skip).limit(limit).all()
+    resultCount = query.with_entities(func.count(models.Book.id)).scalar()
     return result, resultCount
   
   
@@ -662,8 +665,23 @@ def isValidApiKey(db: Session, key: str):
 def getRecentBooks(db: Session, limit: int = 10):
     return db.query(models.Book).order_by(models.Book.id.desc()).limit(limit).all()
 
-def getRandomBook(db: Session):
-    return db.query(models.Book).order_by(func.random()).first()
+def getRandomBook(db: Session, collection: str = None):
+    query = db.query(models.Book)
+    if collection is not None:
+        query = query.filter(inCollection(collection))
+    return query.order_by(func.random()).first()
+
+def inCollection(collection: str):
+    #An empty collection name matches books with no collection (None or "").
+    if collection == "":
+        return or_(models.Book.collection == None, models.Book.collection == "")
+    return models.Book.collection == collection
+
+def getCollections(db: Session):
+    counts = {}
+    for name, n in db.query(models.Book.collection, func.count(models.Book.id)).group_by(models.Book.collection).all():
+        counts[name or ""] = counts.get(name or "", 0) + n
+    return counts
 
 def getImagesForBooks(db: Session, bookIds: list):
     images = {}

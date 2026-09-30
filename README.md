@@ -63,6 +63,9 @@ curl -H "X-Api-Key: ubk_..." http://your-library:8000/api/v1/books/recent
 | `GET /api/v1/books/{id}` | A single book |
 | `GET /api/v1/books/recent?limit=10` | Most recently added books |
 | `GET /api/v1/books/random` | One random book |
+| `GET /api/v1/collections` | Every collection with its number of books |
 | `GET /api/v1/stats` | Total books, ebooks, withdrawn books, and counts by genre and collection |
+
+`/books` and `/books/random` also take a `collection` parameter, e.g. `/api/v1/books/random?collection=Poetry` for a random book from one collection. Use `collection=` (empty) for books with no collection.
 
 Books include their cover image URLs. The API can't add, change, or withdraw books, and it doesn't show who has a book withdrawn. Requests without a valid key get a `401`. Interactive docs are at `/docs`.

@@ -135,3 +135,40 @@ class TestStats:
         assert body["byCollection"][tag] == 1
         # None and "" collections are counted together.
         assert body["byCollection"][""] >= 2
+
+
+class TestCollections:
+    def test_list_collections(self, client, headers, books):
+        tag, _ = books
+        r = client.get("/api/v1/collections", headers=headers)
+        assert r.status_code == 200
+        collections = {c["name"]: c["count"] for c in r.json()}
+        assert collections[tag] == 1
+        assert collections[""] >= 2
+
+    def test_books_filtered_by_collection(self, client, headers, books):
+        tag, rows = books
+        r = client.get("/api/v1/books", headers=headers, params={"collection": tag})
+        assert r.status_code == 200
+        body = r.json()
+        assert body["count"] == 1
+        assert [b["id"] for b in body["books"]] == [rows[0].id]
+
+    def test_books_with_no_collection(self, client, headers, books):
+        _, rows = books
+        r = client.get("/api/v1/books", headers=headers, params={"collection": "", "limit": 100})
+        ids = [b["id"] for b in r.json()["books"]]
+        assert rows[1].id in ids and rows[2].id in ids
+        assert rows[0].id not in ids
+
+    def test_random_book_from_collection(self, client, headers, books):
+        tag, rows = books
+        for _ in range(5):
+            r = client.get("/api/v1/books/random", headers=headers, params={"collection": tag})
+            assert r.status_code == 200
+            assert r.json()["id"] == rows[0].id
+
+    def test_random_book_from_unknown_collection_is_404(self, client, headers):
+        r = client.get("/api/v1/books/random", headers=headers, params={"collection": "no such collection"})
+        assert r.status_code == 404
+        assert r.json() == {"detail": "No books in that collection."}
